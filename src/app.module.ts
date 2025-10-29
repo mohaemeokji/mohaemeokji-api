@@ -37,6 +37,7 @@ import { SmsModule } from './sms/sms.module';
         username: config.get<string>('TYPEORM_USERNAME'),
         password: config.get<string>('TYPEORM_PASSWORD'),
         database: config.get<string>('TYPEORM_DATABASE'),
+        timezone: 'Asia/Seoul',
         synchronize: true,
         entities: [__dirname + '/**/*.{model,entity}.{ts,js}'],
         namingStrategy: new SnakeNamingStrategy(),
