@@ -10,13 +10,14 @@ import { throttlerConfig } from './config/throttler.config';
 import { IamModule } from './domain/iam/iam.module';
 import { UsersModule } from './domain/users/users.module';
 import { SmsModule } from './domain/sms/sms.module';
+import { YoutubeModule } from './domain/youtube/youtube.module';
 
 /**
  * App Module
  * 
  * 애플리케이션의 루트 모듈입니다.
  * - 인프라 설정 (Database, Config, Throttler)
- * - 도메인 모듈 통합 (IAM, Users, SMS)
+ * - 도메인 모듈 통합 (IAM, Users, SMS, Youtube)
  */
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { SmsModule } from './domain/sms/sms.module';
     IamModule,
     UsersModule,
     SmsModule,
+    YoutubeModule,
   ],
 })
 export class AppModule {}

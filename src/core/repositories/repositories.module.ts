@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../entities/user/user.entity';
+import { YoutubeRaw } from '../entities/video/youtube-raw.entity';
 import { UserRepository } from './user/user.repository';
 import { USER_REPOSITORY_TOKEN } from './user/user.repository.interface';
+import { YoutubeRawRepository } from './youtube-raw/youtube-raw.repository';
+import { YOUTUBE_RAW_REPOSITORY_TOKEN } from './youtube-raw/youtube-raw.repository.interface';
 import { UtilsModule } from '../utils/utils.module';
 
 /**
@@ -13,10 +16,11 @@ import { UtilsModule } from '../utils/utils.module';
  * 
  * 현재 제공하는 리포지토리:
  * - UserRepository: 사용자 데이터 접근
+ * - YoutubeRawRepository: 유튜브 원본 데이터 접근
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, YoutubeRaw]),
     UtilsModule,
   ],
   providers: [
@@ -25,11 +29,18 @@ import { UtilsModule } from '../utils/utils.module';
       useClass: UserRepository,
     },
     UserRepository,
+    {
+      provide: YOUTUBE_RAW_REPOSITORY_TOKEN,
+      useClass: YoutubeRawRepository,
+    },
+    YoutubeRawRepository,
   ],
   exports: [
     TypeOrmModule,
     USER_REPOSITORY_TOKEN,
     UserRepository,
+    YOUTUBE_RAW_REPOSITORY_TOKEN,
+    YoutubeRawRepository,
   ],
 })
 export class RepositoriesModule {}
