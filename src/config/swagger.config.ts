@@ -15,7 +15,7 @@ export function configureSwaggerDocs(
       .setTitle('API')
       .setDescription('The API description')
       .setVersion('1.0')
-      .addServer('http://localhost:8000', 'Local server')
+      .addServer('http://localhost:3000', 'Local server')
       .addTag('auth')
       .addTag('users')
       .addBearerAuth({

@@ -1,6 +1,8 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
 import { Recipe, RecipeStatus } from '../../core/entities/recipe/recipe.entity';
 import { RecipeRepository } from '../../core/repositories/recipe/recipe.repository';
+import { UserRecipeRequestRepository } from '../../core/repositories/recipe/user-recipe-request.repository';
+import { USER_RECIPE_REQUEST_REPOSITORY } from '../../core/repositories/repositories.module';
 import { YoutubeService } from '../../core/components/youtube/youtube.service';
 import { GeminiService } from '../../core/components/gemini/gemini.service';
 import { YoutubeIdExtractorService } from '../../core/utils/youtube/youtube-id-extractor.service';
@@ -21,6 +23,8 @@ export class RecipeGeneratorService {
 
   constructor(
     private readonly recipeRepository: RecipeRepository,
+    @Inject(USER_RECIPE_REQUEST_REPOSITORY)
+    private readonly userRecipeRequestRepository: UserRecipeRequestRepository,
     private readonly youtubeService: YoutubeService,
     private readonly geminiService: GeminiService,
     private readonly youtubeIdExtractor: YoutubeIdExtractorService,
@@ -41,12 +45,17 @@ export class RecipeGeneratorService {
     this.promptConfig = yaml.load(fileContents) as PromptConfig;
   }
 
-  async generateRecipe(videoIdOrUrl: string): Promise<Recipe> {
+  async generateRecipe(videoIdOrUrl: string, userId?: number): Promise<Recipe> {
     const videoId = this.youtubeIdExtractor.extractVideoId(videoIdOrUrl);
 
     const existingRecipe = await this.recipeRepository.findByYoutubeId(videoId);
 
     if (existingRecipe) {
+      // 유저 요청 내역 기록 (레시피가 이미 존재하는 경우에도)
+      if (userId) {
+        await this.userRecipeRequestRepository.createOrUpdate(userId, existingRecipe.id);
+      }
+
       if (existingRecipe.isProcessing()) {
         return existingRecipe;
       }
@@ -68,6 +77,11 @@ export class RecipeGeneratorService {
     recipe.status = RecipeStatus.PROCESSING;
 
     const savedRecipe = await this.recipeRepository.save(recipe);
+
+    // 유저 요청 내역 기록 (새로 생성하는 경우)
+    if (userId) {
+      await this.userRecipeRequestRepository.createOrUpdate(userId, savedRecipe.id);
+    }
 
     this.processRecipeInBackground(savedRecipe.id, videoId);
 

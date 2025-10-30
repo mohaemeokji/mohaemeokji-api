@@ -3,13 +3,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../entities/user/user.entity';
 import { YoutubeRaw } from '../entities/video/youtube-raw.entity';
 import { Recipe } from '../entities/recipe/recipe.entity';
+import { UserRecipeRequest } from '../entities/recipe/user-recipe-request.entity';
 import { UserRepository } from './user/user.repository';
 import { USER_REPOSITORY_TOKEN } from './user/user.repository.interface';
 import { YoutubeRawRepository } from './youtube-raw/youtube-raw.repository';
 import { YOUTUBE_RAW_REPOSITORY_TOKEN } from './youtube-raw/youtube-raw.repository.interface';
 import { RecipeRepository } from './recipe/recipe.repository';
 import { RECIPE_REPOSITORY } from './recipe/recipe.repository.interface';
+import { UserRecipeRequestRepository } from './recipe/user-recipe-request.repository';
 import { UtilsModule } from '../utils/utils.module';
+
+export const USER_RECIPE_REQUEST_REPOSITORY = 'USER_RECIPE_REQUEST_REPOSITORY';
 
 /**
  * Repositories Module
@@ -23,7 +27,7 @@ import { UtilsModule } from '../utils/utils.module';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, YoutubeRaw, Recipe]),
+    TypeOrmModule.forFeature([User, YoutubeRaw, Recipe, UserRecipeRequest]),
     UtilsModule,
   ],
   providers: [
@@ -42,6 +46,11 @@ import { UtilsModule } from '../utils/utils.module';
       useClass: RecipeRepository,
     },
     RecipeRepository,
+    {
+      provide: USER_RECIPE_REQUEST_REPOSITORY,
+      useClass: UserRecipeRequestRepository,
+    },
+    UserRecipeRequestRepository,
   ],
   exports: [
     TypeOrmModule,
@@ -51,6 +60,8 @@ import { UtilsModule } from '../utils/utils.module';
     YoutubeRawRepository,
     RECIPE_REPOSITORY,
     RecipeRepository,
+    USER_RECIPE_REQUEST_REPOSITORY,
+    UserRecipeRequestRepository,
   ],
 })
 export class RepositoriesModule {}

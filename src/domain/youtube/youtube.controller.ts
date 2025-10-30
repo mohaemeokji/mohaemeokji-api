@@ -13,6 +13,7 @@ import {
   ApiNotFoundResponse,
   ApiParam,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { YoutubeService } from './youtube.service';
 import { YoutubeVideoInfoResponseDto } from './dto/youtube-video-info-response.dto';
@@ -24,7 +25,8 @@ import { AuthType } from '../iam/enums/auth-type.enum';
 
 @ApiTags('youtube')
 @Controller('youtube')
-@AuthGuard(AuthType.None)
+@ApiBearerAuth()
+@AuthGuard(AuthType.Bearer)
 export class YoutubeController {
   constructor(private readonly youtubeService: YoutubeService) {}
 

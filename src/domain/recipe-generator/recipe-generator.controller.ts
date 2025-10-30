@@ -1,25 +1,31 @@
 import { Controller, Post, Get, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { RecipeGeneratorService } from './recipe-generator.service';
 import { GenerateRecipeRequestDto } from './dto/generate-recipe-request.dto';
 import { RecipeResponseDto } from './dto/recipe-response.dto';
 import { AuthGuard } from '../iam/decorators/auth-guard.decorator';
 import { AuthType } from '../iam/enums/auth-type.enum';
+import { GetUser } from '../users/decorators/get-user.decorator';
+import { JwtUser } from '../iam/interfaces/jwt-user.interface';
 
 @ApiTags('Recipe Generator')
 @Controller('recipe-generator')
-@AuthGuard(AuthType.None)
+@ApiBearerAuth()
+@AuthGuard(AuthType.Bearer)
 export class RecipeGeneratorController {
   constructor(private readonly recipeGeneratorService: RecipeGeneratorService) {}
 
   @Post('generate')
   @ApiOperation({ 
     summary: '레시피 생성 요청',
-    description: '유튜브 비디오로부터 레시피를 생성합니다. 이미 생성중이거나 완료된 경우 기존 데이터를 반환합니다.'
+    description: '유튜브 비디오로부터 레시피를 생성합니다. 이미 생성중이거나 완료된 경우 기존 데이터를 반환합니다. 요청 내역이 자동으로 기록됩니다.'
   })
   @ApiResponse({ status: 200, description: '레시피 생성 요청 성공', type: RecipeResponseDto })
-  async generateRecipe(@Body() dto: GenerateRecipeRequestDto): Promise<RecipeResponseDto> {
-    const recipe = await this.recipeGeneratorService.generateRecipe(dto.videoIdOrUrl);
+  async generateRecipe(
+    @GetUser() user: JwtUser,
+    @Body() dto: GenerateRecipeRequestDto
+  ): Promise<RecipeResponseDto> {
+    const recipe = await this.recipeGeneratorService.generateRecipe(dto.videoIdOrUrl, user.sub);
     return this.mapToDto(recipe);
   }
 

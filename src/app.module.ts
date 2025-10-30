@@ -12,13 +12,15 @@ import { UsersModule } from './domain/users/users.module';
 import { SmsModule } from './domain/sms/sms.module';
 import { YoutubeModule } from './domain/youtube/youtube.module';
 import { RecipeGeneratorModule } from './domain/recipe-generator/recipe-generator.module';
+import { RecipeSearchModule } from './domain/recipe-search/recipe-search.module';
+import { RecipeExplorerModule } from './domain/recipe-explorer/recipe-explorer.module';
 
 /**
  * App Module
  * 
  * 애플리케이션의 루트 모듈입니다.
  * - 인프라 설정 (Database, Config, Throttler)
- * - 도메인 모듈 통합 (IAM, Users, SMS, Youtube)
+ * - 도메인 모듈 통합 (IAM, Users, SMS, Youtube, Recipe)
  */
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { RecipeGeneratorModule } from './domain/recipe-generator/recipe-generato
     SmsModule,
     YoutubeModule,
     RecipeGeneratorModule,
+    RecipeSearchModule,
+    RecipeExplorerModule,
   ],
 })
 export class AppModule {}

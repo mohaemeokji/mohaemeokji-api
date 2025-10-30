@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindManyOptions } from 'typeorm';
 import { Recipe, RecipeStatus } from '../../entities/recipe/recipe.entity';
 import { IRecipeRepository } from './recipe.repository.interface';
 
@@ -29,6 +29,14 @@ export class RecipeRepository implements IRecipeRepository {
 
   async findByStatus(status: RecipeStatus): Promise<Recipe[]> {
     return await this.repository.find({ where: { status } });
+  }
+
+  async find(options?: FindManyOptions<Recipe>): Promise<Recipe[]> {
+    return await this.repository.find(options);
+  }
+
+  async findAndCount(options?: FindManyOptions<Recipe>): Promise<[Recipe[], number]> {
+    return await this.repository.findAndCount(options);
   }
 
   async save(recipe: Recipe): Promise<Recipe> {
