@@ -5,6 +5,7 @@ import {
   Inject,
   Logger,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { HttpException, HttpStatus } from '@nestjs/common';
@@ -350,14 +351,12 @@ export class OAuthLoginService {
 
   /**
    * 랜덤 비밀번호 생성
-   * OAuth 사용자는 비밀번호로 로그인하지 않으므로 랜덤 문자열을 생성합니다.
+   * OAuth 사용자는 비밀번호로 로그인하지 않으므로 암호학적으로 안전한 랜덤 문자열을 생성합니다.
+   * crypto.randomBytes()를 사용하여 보안성을 보장합니다.
    */
   private generateRandomPassword(): string {
-    return (
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15)
-    );
+    // 32바이트의 암호학적으로 안전한 랜덤 데이터를 base64로 인코딩
+    return crypto.randomBytes(32).toString('base64');
   }
 }
 
