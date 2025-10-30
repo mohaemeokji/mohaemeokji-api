@@ -34,7 +34,7 @@ export class User extends BaseEntity {
 
   @Column({
     type: 'enum',
-    enum: ['direct', 'kakao', 'naver', 'google'],
+    enum: ['direct', 'kakao', 'naver', 'google', 'apple'],
     default: 'direct',
   })
   register_path: string;

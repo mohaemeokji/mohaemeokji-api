@@ -5,18 +5,21 @@ import { UtilsModule } from '../../core/utils/utils.module';
 import { UsersModule } from '../users/users.module';
 import { MailerModule } from '../../core/components/mailer/mailer.module';
 import { RepositoriesModule } from '../../core/repositories/repositories.module';
+import oauthConfig from '../../config/oauth.config';
 
 // Services
 import { LoginService } from './services/login.service';
 import { RegisterService } from './services/register.service';
 import { ChangePasswordService } from './services/change-password.service';
 import { ForgotPasswordService } from './services/forgot-password.service';
+import { OAuthLoginService } from './services/oauth-login.service';
 
 // Controllers
 import { LoginController } from './controllers/login.controller';
 import { RegisterController } from './controllers/register.controller';
 import { ChangePasswordController } from './controllers/change-password.controller';
 import { ForgotPasswordController } from './controllers/forgot-password.controller';
+import { OAuthLoginController } from './controllers/oauth-login.controller';
 
 // Guards
 import { AccessTokenGuard } from './guards/access-token.guard';
@@ -38,6 +41,7 @@ import { SmsModule } from '../../core/components/sms/sms.module';
 @Module({
   imports: [
     ConfigModule.forFeature(jwtConfig),
+    ConfigModule.forFeature(oauthConfig),
     JwtModule.registerAsync(jwtConfig.asProvider()),
     UsersModule,
     RepositoriesModule,
@@ -50,6 +54,7 @@ import { SmsModule } from '../../core/components/sms/sms.module';
     RegisterController,
     ChangePasswordController,
     ForgotPasswordController,
+    OAuthLoginController,
   ],
   providers: [
     {
@@ -60,8 +65,9 @@ import { SmsModule } from '../../core/components/sms/sms.module';
     RegisterService,
     ChangePasswordService,
     ForgotPasswordService,
+    OAuthLoginService,
     AccessTokenGuard,
   ],
-  exports: [LoginService, RegisterService],
+  exports: [LoginService, RegisterService, OAuthLoginService],
 })
 export class IamModule {}
