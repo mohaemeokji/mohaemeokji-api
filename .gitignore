@@ -1,12 +1,15 @@
-# compiled output
+# Compiled output
 /dist
 /node_modules
+*.tsbuildinfo
+typeorm-cli.config.js
+typeorm-cli.config.js.map
+typeorm-cli.config.d.ts
 
-# Enviroment
+# Environment variables
 .env
-.env.dev
-.env.stage
-.env.prod
+.env.*
+!.env.example
 
 # Logs
 logs
@@ -15,27 +18,41 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+pnpm-debug.log*
 
 # OS
 .DS_Store
+Thumbs.db
 
 # Tests
 /coverage
 /.nyc_output
+/test-results
 
 # IDEs and editors
 /.idea
+/.vscode
 .project
 .classpath
 .c9/
 *.launch
 .settings/
 *.sublime-workspace
+*.sublime-project
 tags
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# Docker (주석 처리 - 프로젝트에서 Docker 사용하면 제거)
+# docker-compose.yml
+# docker-compose.*.yml
+# Dockerfile
+# .dockerignore
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Misc
+.cache
+.temp
+.tmp

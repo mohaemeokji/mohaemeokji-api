@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from './../../src/app.module';
-import { MailerService } from '../../src/shared/mailer/mailer.service';
+import { MailerService } from '../../src/core/components/mailer/mailer.service';
 import {
   BadRequestException,
   HttpStatus,
   ValidationPipe,
 } from '@nestjs/common';
-import { AccessTokenGuard } from '../../src/iam/login/guards/access-token/access-token.guard';
+import { AccessTokenGuard } from '../../src/domain/iam/guards/access-token.guard';
 import {
   FastifyAdapter,
   NestFastifyApplication,

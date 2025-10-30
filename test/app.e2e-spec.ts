@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { HttpStatus, ValidationPipe } from '@nestjs/common';
-import { AccessTokenGuard } from '../src/iam/login/guards/access-token/access-token.guard';
+import { AccessTokenGuard } from '../src/domain/iam/guards/access-token.guard';
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -21,7 +21,7 @@ describe('App (e2e)', () => {
       .useValue({ canActivate: () => true })
       .compile();
 
-  app = moduleFixture.createNestApplication<NestFastifyApplication>(
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter()
     );
     app.setGlobalPrefix('api');
@@ -39,16 +39,7 @@ describe('App (e2e)', () => {
     await app.getHttpAdapter().getInstance().ready();
   });
 
-  describe('AppController (e2e)', () => {
-    it('should return the follwing message: "This is a simple example of item returned by your APIs." [GET /api]', () => {
-      return request(app.getHttpServer())
-        .get('/api')
-        .expect({
-          message: 'This is a simple example of item returned by your APIs.',
-        })
-        .expect(HttpStatus.OK);
-    });
-
+  describe('Auth (e2e)', () => {
     describe('should sign in and get a "live" JWT', () => {
       it('should authenticates user with valid credentials and provides a jwt token', () => {
         return request(app.getHttpServer())
@@ -76,16 +67,6 @@ describe('App (e2e)', () => {
             });
 
             expect(HttpStatus.OK);
-          });
-      });
-
-      it('should return the follwing message: "Access to protected resources granted! This protected resource is displayed when the token is successfully provided". - ( endpoint protected ) [GET /api/secure]', () => {
-        return request(app.getHttpServer())
-          .get('/api/secure')
-          .set('Authorization', `Bearer ${accessTokenJwt}`)
-          .expect({
-            message:
-              'Access to protected resources granted! This protected resource is displayed when the token is successfully provided.',
           });
       });
     });

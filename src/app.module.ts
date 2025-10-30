@@ -1,62 +1,34 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { IamModule } from './iam/iam.module';
-import { validateSchemaEnv } from './helpers/validation-schema-env';
-import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { SmsModule } from './sms/sms.module';
 
+import { appConfig } from './config/app.config';
+import { databaseConfig } from './config/database.config';
+import { throttlerConfig } from './config/throttler.config';
+
+import { IamModule } from './domain/iam/iam.module';
+import { UsersModule } from './domain/users/users.module';
+import { SmsModule } from './domain/sms/sms.module';
+
+/**
+ * App Module
+ * 
+ * 애플리케이션의 루트 모듈입니다.
+ * - 인프라 설정 (Database, Config, Throttler)
+ * - 도메인 모듈 통합 (IAM, Users, SMS)
+ */
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env', '.env.dev', '.env.stage', '.env.prod'],
-      validate: validateSchemaEnv,
-    }),
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          ttl: config.get<number>('THROTTLE_TTL'),
-          limit: config.get<number>('THROTTLE_LIMIT'),
-        },
-      ],
-    }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('TYPEORM_HOST'),
-        port: config.get<number>('TYPEORM_PORT'),
-        username: config.get<string>('TYPEORM_USERNAME'),
-        password: config.get<string>('TYPEORM_PASSWORD'),
-        database: config.get<string>('TYPEORM_DATABASE'),
-        timezone: 'Asia/Seoul',
-        synchronize: true,
-        entities: [__dirname + '/**/*.{model,entity}.{ts,js}'],
-        namingStrategy: new SnakeNamingStrategy(),
-        migrations: ['dist/migrations/**/*.js'],
-        subscribers: ['dist/subscriber/**/*.js'],
-        cli: {
-          migrationsDir: config.get<string>('TYPEORM_MIGRATIONS_DIR'),
-          subscribersDir: config.get<string>('TYPEORM_SUBSCRIBERS_DIR'),
-        },
-        ssl: {
-          rejectUnauthorized: false,
-        },
-      }),
-    }),
+    // Infrastructure
+    ConfigModule.forRoot(appConfig),
+    TypeOrmModule.forRootAsync(databaseConfig),
+    ThrottlerModule.forRootAsync(throttlerConfig),
+
+    // Domain Modules
     IamModule,
     UsersModule,
     SmsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

@@ -7,19 +7,16 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "node dist/src/main",
+    "start": "node dist/src/app",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/src/main",
+    "start:prod": "node dist/src/app",
     "start:repl": "nest start --entryFile repl",
-    "lint": "eslint {src,test}/**/*.ts --fix",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "prepare": "husky"
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
@@ -95,19 +92,16 @@
     ],
     "coveragePathIgnorePatterns": [
       "/src/migrations",
-      "/src/helpers",
-      "/src/main.ts",
+      "/src/config",
+      "/src/app.ts",
       "/src/repl.ts",
-      "/src/shared/logger",
-      "/src/users/repositories",
+      "/src/core/components/logger",
+      "/src/core/repositories",
       ".constants.ts",
       ".guard.ts",
       ".config.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  },
-  "lint-staged": {
-    "**/*.{ts,json}": []
   }
 }

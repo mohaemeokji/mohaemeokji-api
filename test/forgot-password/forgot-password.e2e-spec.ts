@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from './../../src/app.module';
-import { MailerService } from '../../src/shared/mailer/mailer.service';
+import { MailerService } from '../../src/core/components/mailer/mailer.service';
 import {
   BadRequestException,
   HttpStatus,
   ValidationPipe,
 } from '@nestjs/common';
-import { ForgotPasswordDto } from 'src/iam/forgot-password/dto/forgot-password.dto';
-import { UserDto } from '../../src/users/dto/user.dto';
+import { ForgotPasswordDto } from '../../src/domain/iam/dto/forgot-password.dto';
+import { UserDto } from '../../src/domain/users/dto/user.dto';
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -61,7 +61,7 @@ describe('App (e2e)', () => {
     it('should create user', async () => {
       return await request(app.getHttpServer())
         .post('/api/auth/register')
-        .send(createUser as UserDto)
+        .send(createUser)
         .then(({ body }) => {
           expect(body).toEqual({
             message: 'User registration successfully!',
