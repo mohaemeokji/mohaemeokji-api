@@ -11,6 +11,7 @@ import { IamModule } from './domain/iam/iam.module';
 import { UsersModule } from './domain/users/users.module';
 import { SmsModule } from './domain/sms/sms.module';
 import { YoutubeModule } from './domain/youtube/youtube.module';
+import { RecipeGeneratorModule } from './domain/recipe-generator/recipe-generator.module';
 
 /**
  * App Module
@@ -31,6 +32,7 @@ import { YoutubeModule } from './domain/youtube/youtube.module';
     UsersModule,
     SmsModule,
     YoutubeModule,
+    RecipeGeneratorModule,
   ],
 })
 export class AppModule {}

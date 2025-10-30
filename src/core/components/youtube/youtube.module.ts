@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { YoutubeService } from './youtube.service';
 import { RepositoriesModule } from '../../repositories/repositories.module';
+import { UtilsModule } from '../../utils/utils.module';
 
 /**
  * Core YouTube Module
@@ -16,7 +17,7 @@ import { RepositoriesModule } from '../../repositories/repositories.module';
  * - 채널 정보 및 비디오 목록 조회
  */
 @Module({
-  imports: [RepositoriesModule],
+  imports: [RepositoriesModule, UtilsModule],
   providers: [YoutubeService],
   exports: [YoutubeService],
 })

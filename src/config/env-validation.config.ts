@@ -11,6 +11,7 @@ const schema = {
     TYPEORM_USERNAME: { type: 'string' },
     TYPEORM_PASSWORD: { type: 'string' },
     TYPEORM_DATABASE: { type: 'string' },
+    GEMINI_API_KEY: { type: 'string' },
   },
   required: [
     'TYPEORM_HOST',
@@ -18,6 +19,7 @@ const schema = {
     'TYPEORM_USERNAME',
     'TYPEORM_PASSWORD',
     'TYPEORM_DATABASE',
+    'GEMINI_API_KEY',
   ],
 };
 

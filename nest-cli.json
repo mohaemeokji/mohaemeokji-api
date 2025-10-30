@@ -4,6 +4,13 @@
   "entryFile": "app",
   "compilerOptions": {
     "deleteOutDir": true,
-    "plugins": ["@nestjs/swagger"]
+    "plugins": ["@nestjs/swagger"],
+    "assets": [
+      {
+        "include": "**/*.yaml",
+        "outDir": "dist/src",
+        "watchAssets": true
+      }
+    ]
   }
 }

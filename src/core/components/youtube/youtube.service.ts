@@ -2,40 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { Innertube } from 'youtubei.js';
 import { YoutubeRaw } from '../../entities/video/youtube-raw.entity';
 import { YoutubeRawRepository } from '../../repositories/youtube-raw/youtube-raw.repository';
+import { YoutubeIdExtractorService } from '../../utils/youtube/youtube-id-extractor.service';
 
 @Injectable()
 export class YoutubeService {
   private youtube: Innertube;
 
-  constructor(private readonly youtubeRawRepository: YoutubeRawRepository) {}
+  constructor(
+    private readonly youtubeRawRepository: YoutubeRawRepository,
+    private readonly youtubeIdExtractor: YoutubeIdExtractorService,
+  ) {}
 
   async onModuleInit() {
     this.youtube = await Innertube.create();
   }
 
-  private extractVideoId(url: string): string {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
-      /youtube\.com\/embed\/([^&\n?#]+)/,
-      /youtube\.com\/v\/([^&\n?#]+)/,
-      /youtube\.com\/shorts\/([^&\n?#]+)/,
-    ];
-
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match?.[1]) return match[1];
-    }
-
-    return url;
-  }
-
-  private isShorts(url: string): boolean {
-    return url.includes('/shorts/');
-  }
-
   async getVideoInfo(videoIdOrUrl: string) {
-    const videoId = this.extractVideoId(videoIdOrUrl);
-    const isShorts = this.isShorts(videoIdOrUrl);
+    const videoId = this.youtubeIdExtractor.extractVideoId(videoIdOrUrl);
+    const isShorts = this.youtubeIdExtractor.isShorts(videoIdOrUrl);
     
     const info = isShorts 
       ? await this.youtube.getShortsVideoInfo(videoId)
@@ -65,7 +49,7 @@ export class YoutubeService {
   }
 
   async getComments(videoIdOrUrl: string, maxComments: number = 100) {
-    const videoId = this.extractVideoId(videoIdOrUrl);
+    const videoId = this.youtubeIdExtractor.extractVideoId(videoIdOrUrl);
 
     try {
       const commentsSection = await this.youtube.getComments(videoId, 'TOP_COMMENTS');
@@ -105,8 +89,8 @@ export class YoutubeService {
   }
 
   async getTranscript(videoIdOrUrl: string, language: string = 'ko') {
-    const videoId = this.extractVideoId(videoIdOrUrl);
-    const isShorts = this.isShorts(videoIdOrUrl);
+    const videoId = this.youtubeIdExtractor.extractVideoId(videoIdOrUrl);
+    const isShorts = this.youtubeIdExtractor.isShorts(videoIdOrUrl);
 
     try {
       const info = isShorts 
@@ -293,7 +277,7 @@ export class YoutubeService {
   }
 
   private async collectFromYoutube(videoIdOrUrl: string, maxComments: number = 100, language: string = 'ko'): Promise<YoutubeRaw> {
-    const videoId = this.extractVideoId(videoIdOrUrl);
+    const videoId = this.youtubeIdExtractor.extractVideoId(videoIdOrUrl);
     const youtubeRaw = new YoutubeRaw();
     youtubeRaw.videoId = videoId;
     youtubeRaw.videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
@@ -360,7 +344,7 @@ export class YoutubeService {
   }
 
   async getComprehensiveVideoData(videoIdOrUrl: string, maxComments: number = 100, language: string = 'ko'): Promise<YoutubeRaw> {
-    const videoId = this.extractVideoId(videoIdOrUrl);
+    const videoId = this.youtubeIdExtractor.extractVideoId(videoIdOrUrl);
     const existingData = await this.youtubeRawRepository.findByVideoId(videoId);
 
     if (existingData) {

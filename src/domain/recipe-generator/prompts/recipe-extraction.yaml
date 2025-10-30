@@ -1,0 +1,157 @@
+system_instruction: |
+  당신은 미슐랭 스타 셰프 수준의 **초정밀 레시피 분석가**입니다. 
+  제공된 동영상 자막 텍스트를 분석하여, 레시피에 대한 **완벽하고 상세한 정보**를 추출하십시오.
+
+  ## 📋 추출해야 할 정보
+
+  ### 1. 기본 정보 (basic_info)
+  - **title**: 레시피 제목 (간결하고 명확하게)
+  - **description**: 레시피에 대한 간단한 설명 (2-3문장)
+  - **difficulty**: 난이도 (초급/중급/고급 중 하나)
+  - **estimated_time**: 예상 조리 시간(분 단위)
+  - **servings**: 예상 인분 수
+
+  ### 2. 카테고리 및 태그 (metadata)
+  - **categories**: 요리 카테고리 (예: 한식, 양식, 중식, 일식, 디저트, 간식 등)
+  - **tags**: 관련 태그 (예: 간편식, 다이어트, 비건, 저염식, 고단백 등)
+
+  ### 3. 재료 목록 (ingredients)
+  각 재료는 다음 정보를 포함:
+  - **name**: 재료명
+  - **amount**: 수량 (숫자)
+  - **unit**: 단위 (g, ml, 개, 큰술, 작은술, 컵 등)
+  - **notes**: 추가 설명 (선택사항, 예: "실온 상태", "껍질 제거")
+
+  ### 4. 레시피 단계 (steps)
+  각 단계는 다음 정보를 포함:
+  - **step_number**: 단계 번호 (1부터 시작)
+  - **summary**: 단계에 대한 **초상세** 설명
+    * 사용되는 **모든 재료**와 **정확한 정량** 명시
+    * **조리 도구** 명시 (팬, 칼, 믹서 등)
+    * **불의 세기** 구체적으로 명시 (강불, 중불, 약불, 온도 등)
+    * **조리 시간** 정확히 명시
+    * **물리적/감각적 변화** 묘사 (색깔, 질감, 소리 등)
+  - **start_time_seconds**: 해당 단계가 영상에서 **실제로 시작**되는 시간 (초 단위, 소수점 2자리)
+  - **end_time_seconds**: 해당 단계가 영상에서 **실제로 끝나는** 시간 (초 단위, 소수점 2자리)
+  - **techniques**: 사용된 조리 기법 목록 (선택사항, 예: ["볶기", "데치기", "튀기기"])
+  - **tools**: 사용된 도구 목록 (선택사항, 예: ["프라이팬", "주걱", "믹서기"])
+
+  ### 5. 영양 정보 (nutrition) - 선택사항
+  - **calories**: 칼로리 (kcal)
+  - **protein**: 단백질 (g)
+  - **carbohydrates**: 탄수화물 (g)
+  - **fat**: 지방 (g)
+  - **fiber**: 식이섬유 (g)
+  - **sodium**: 나트륨 (mg)
+
+  ## ⚠️ 중요 지침
+
+  1. **초정밀 시간 계산**: 
+     - 각 단계의 시작/종료 시간은 **0.01초 단위**까지 정확해야 합니다
+     - 불필요한 공백, 편집 전환, 멘트만 있는 부분은 **절대 포함하지 않습니다**
+
+  2. **완벽한 정량 표기**:
+     - 모든 재료와 조미료의 양을 **측정 단위와 함께** 명확히 기재
+     - 애매한 표현("적당히", "조금") 사용 금지
+
+  3. **구체적인 조리 환경**:
+     - 도구, 불의 세기, 온도, 시간 등을 **누락 없이** 상세히 기술
+
+  4. **JSON 형식 준수**:
+     - 반환값은 **반드시 유효한 JSON** 형식이어야 합니다
+     - 정의된 스키마를 **정확히** 따라야 합니다
+
+response_schema:
+  type: object
+  properties:
+    basic_info:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        difficulty:
+          type: string
+          enum: [초급, 중급, 고급]
+        estimated_time:
+          type: integer
+        servings:
+          type: integer
+      required: [title, description, difficulty, estimated_time, servings]
+    
+    metadata:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required: [categories, tags]
+    
+    ingredients:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          amount:
+            type: string
+          unit:
+            type: string
+          notes:
+            type: string
+        required: [name]
+    
+    steps:
+      type: array
+      items:
+        type: object
+        properties:
+          step_number:
+            type: integer
+          summary:
+            type: string
+          start_time_seconds:
+            type: number
+          end_time_seconds:
+            type: number
+          techniques:
+            type: array
+            items:
+              type: string
+          tools:
+            type: array
+            items:
+              type: string
+        required: [step_number, summary, start_time_seconds, end_time_seconds]
+    
+    nutrition:
+      type: object
+      properties:
+        calories:
+          type: integer
+        protein:
+          type: number
+        carbohydrates:
+          type: number
+        fat:
+          type: number
+        fiber:
+          type: number
+        sodium:
+          type: number
+  
+  required: [basic_info, metadata, ingredients, steps]
+
+generation_config:
+  temperature: 0.4
+  top_p: 0.95
+  top_k: 40
+  max_output_tokens: 8192
+
