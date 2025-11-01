@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OAuth 로그인 테스트</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.3s;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .settings {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .settings h2 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #666;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .input-group input,
+    .input-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border 0.3s;
+      font-family: 'Courier New', monospace;
+    }
+
+    .input-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 15px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-kakao {
+      background: #FEE500;
+      color: #000000;
+    }
+
+    .btn-kakao:hover:not(:disabled) {
+      background: #fdd835;
+    }
+
+    .btn-apple {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .btn-apple:hover:not(:disabled) {
+      background: #1a1a1a;
+    }
+
+    .btn-test {
+      background: #667eea;
+      color: #ffffff;
+    }
+
+    .btn-test:hover:not(:disabled) {
+      background: #5568d3;
+    }
+
+    .result {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .result.show {
+      display: block;
+    }
+
+    .result h3 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .result pre {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+      border: 1px solid #e0e0e0;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .result.success {
+      border-left: 4px solid #4caf50;
+    }
+
+    .result.error {
+      border-left: 4px solid #f44336;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #2196f3;
+    }
+
+    .info-box h3 {
+      color: #1976d2;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .info-box p {
+      color: #555;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .info-box ul {
+      margin-left: 20px;
+      margin-top: 8px;
+    }
+
+    .info-box li {
+      color: #555;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 4px;
+    }
+
+    .info-box code {
+      background: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .warning-box {
+      background: #fff3e0;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #ff9800;
+    }
+
+    .warning-box h3 {
+      color: #f57c00;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .warning-box p {
+      color: #555;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 OAuth 로그인 테스트</h1>
+    <p class="subtitle">카카오 & 애플 로그인 테스트 페이지</p>
+
+    <!-- 탭 -->
+    <div class="tabs">
+      <button class="tab active" data-tab="kakao">🍋 카카오</button>
+      <button class="tab" data-tab="apple">🍎 애플</button>
+    </div>
+
+    <!-- 카카오 탭 -->
+    <div id="kakao-tab" class="tab-content active">
+      <div class="info-box">
+        <h3>📌 카카오 로그인 테스트 방법</h3>
+        <p><strong>방법 1: 카카오 개발자 콘솔에서 토큰 발급 (가장 간단!)</strong></p>
+        <ul>
+          <li>카카오 개발자 콘솔 > 토큰 메뉴</li>
+          <li>"카카오 계정으로 로그인" 버튼 클릭</li>
+          <li>표시된 "액세스 토큰" 전체 복사</li>
+          <li>아래 입력란에 붙여넣고 테스트</li>
+        </ul>
+        <p style="margin-top: 10px;"><strong>🔗 바로 가기:</strong> <a href="https://developers.kakao.com/console/app" target="_blank" style="color: #667eea;">카카오 개발자 콘솔</a></p>
+      </div>
+
+      <div class="warning-box">
+        <h3>⚠️ 토큰 발급 방법</h3>
+        <p>
+          <strong>방법 1: 카카오 API 테스트 도구 (권장)</strong><br>
+          1. <a href="https://developers.kakao.com/tool/rest-api/open/get/v2-user-me" target="_blank" style="color: #f57c00;">카카오 API 테스트 도구 접속</a><br>
+          2. 우측 상단 "로그인" 클릭<br>
+          3. 카카오 계정으로 로그인<br>
+          4. <strong>"액세스 토큰"</strong> 복사 (하단에 표시됨)<br>
+          5. 아래에 붙여넣기<br>
+          <br>
+          <strong>⚠️ 주의사항:</strong><br>
+          - 카카오 개발자 콘솔에서 앱을 먼저 생성하세요<br>
+          - 동의 항목에서 <strong>이메일을 "필수 동의"</strong>로 설정하세요<br>
+          - 토큰은 약 6시간 동안 유효합니다
+        </p>
+      </div>
+
+      <div class="settings">
+        <h2>⚙️ 설정</h2>
+        <div class="input-group">
+          <label for="kakao-api-url">백엔드 API URL</label>
+          <input type="text" id="kakao-api-url" value="http://localhost:3000" placeholder="http://localhost:3000">
+        </div>
+        <div class="input-group">
+          <label for="kakao-token">카카오 액세스 토큰</label>
+          <textarea id="kakao-token" placeholder="카카오 API 테스트 도구에서 받은 액세스 토큰을 붙여넣으세요"></textarea>
+          <div class="help-text">위 링크에서 토큰을 복사하여 여기에 붙여넣으세요</div>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn-kakao" id="test-kakao-btn">
+          <span>🍋</span>
+          <span>카카오 로그인 테스트</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 애플 탭 -->
+    <div id="apple-tab" class="tab-content">
+      <div class="info-box">
+        <h3>📌 애플 로그인 테스트 방법</h3>
+        <p><strong>네이티브 앱에서 Identity Token 받기</strong></p>
+        <ul>
+          <li>iOS/Android 앱에서 애플 로그인 실행</li>
+          <li>Identity Token 복사</li>
+          <li>아래 입력란에 붙여넣기</li>
+          <li>"테스트" 버튼 클릭</li>
+        </ul>
+      </div>
+
+      <div class="warning-box">
+        <h3>⚠️ 애플 로그인 제한사항</h3>
+        <p>
+          애플 로그인은 웹에서 테스트가 제한적입니다.<br>
+          네이티브 앱(iOS/Android)에서 Identity Token을 받아 테스트하세요.<br>
+          <br>
+          웹에서 테스트하려면: Apple Developer 계정, Services ID 등록, 도메인 검증이 필요합니다.
+        </p>
+      </div>
+
+      <div class="settings">
+        <h2>⚙️ 설정</h2>
+        <div class="input-group">
+          <label for="apple-api-url">백엔드 API URL</label>
+          <input type="text" id="apple-api-url" value="http://localhost:3000" placeholder="http://localhost:3000">
+        </div>
+        <div class="input-group">
+          <label for="apple-token">애플 Identity Token (JWT)</label>
+          <textarea id="apple-token" placeholder="네이티브 앱에서 받은 Identity Token을 붙여넣으세요"></textarea>
+          <div class="help-text">형식: eyJraWQiOiJlWGF1bm1MIiwiYWxnIjoiUlMyNTYifQ...</div>
+        </div>
+        <div class="input-group">
+          <label for="apple-name">사용자 이름 (선택사항)</label>
+          <input type="text" id="apple-name" placeholder="홍길동">
+          <div class="help-text">최초 로그인 시에만 애플에서 제공됩니다</div>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn-apple" id="test-apple-btn">
+          <span>🍎</span>
+          <span>애플 로그인 테스트</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 결과 -->
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    // DOM 요소
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const resultDiv = document.getElementById('result');
+
+    // 카카오 요소
+    const kakaoApiUrlInput = document.getElementById('kakao-api-url');
+    const kakaoTokenInput = document.getElementById('kakao-token');
+    const testKakaoBtn = document.getElementById('test-kakao-btn');
+
+    // 애플 요소
+    const appleApiUrlInput = document.getElementById('apple-api-url');
+    const appleTokenInput = document.getElementById('apple-token');
+    const appleNameInput = document.getElementById('apple-name');
+    const testAppleBtn = document.getElementById('test-apple-btn');
+
+    // 로컬 스토리지에서 설정 불러오기
+    kakaoApiUrlInput.value = localStorage.getItem('kakaoApiUrl') || 'http://localhost:3000';
+    appleApiUrlInput.value = localStorage.getItem('appleApiUrl') || 'http://localhost:3000';
+    kakaoTokenInput.value = localStorage.getItem('kakaoToken') || '';
+    appleTokenInput.value = localStorage.getItem('appleToken') || '';
+
+    // 설정 저장
+    kakaoApiUrlInput.addEventListener('change', () => {
+      localStorage.setItem('kakaoApiUrl', kakaoApiUrlInput.value);
+    });
+
+    appleApiUrlInput.addEventListener('change', () => {
+      localStorage.setItem('appleApiUrl', appleApiUrlInput.value);
+    });
+
+    kakaoTokenInput.addEventListener('change', () => {
+      localStorage.setItem('kakaoToken', kakaoTokenInput.value);
+    });
+
+    appleTokenInput.addEventListener('change', () => {
+      localStorage.setItem('appleToken', appleTokenInput.value);
+    });
+
+    // 탭 전환
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+          if (content.id === `${tabName}-tab`) {
+            content.classList.add('active');
+          }
+        });
+
+        resultDiv.classList.remove('show');
+      });
+    });
+
+    // 결과 표시
+    function showResult(type, title, data) {
+      resultDiv.className = `result show ${type}`;
+      resultDiv.innerHTML = `
+        <h3>${type === 'success' ? '✅' : '❌'} ${title}</h3>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      `;
+      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // 로딩 상태 표시
+    function setLoading(button, isLoading) {
+      if (isLoading) {
+        button.disabled = true;
+        button.dataset.originalText = button.innerHTML;
+        button.innerHTML = '<span class="loading"></span><span>처리중...</span>';
+      } else {
+        button.disabled = false;
+        if (button.dataset.originalText) {
+          button.innerHTML = button.dataset.originalText;
+        }
+      }
+    }
+
+    // 카카오 로그인 테스트
+    testKakaoBtn.addEventListener('click', async () => {
+      const apiUrl = kakaoApiUrlInput.value.trim();
+      const accessToken = kakaoTokenInput.value.trim();
+
+      if (!apiUrl) {
+        alert('API URL을 입력하세요');
+        return;
+      }
+
+      if (!accessToken) {
+        alert('카카오 액세스 토큰을 입력하세요');
+        return;
+      }
+
+      setLoading(testKakaoBtn, true);
+
+      try {
+        const response = await fetch(`${apiUrl}/api/auth/oauth/kakao`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            accessToken: accessToken,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showResult('success', '카카오 로그인 성공! 🎉', data);
+        } else {
+          showResult('error', '백엔드 로그인 실패', {
+            status: response.status,
+            ...data,
+            troubleshooting: {
+              tip1: '백엔드 터미널에서 상세한 에러 로그를 확인하세요',
+              tip2: '카카오 개발자 콘솔에서 이메일 동의항목을 필수로 설정했는지 확인하세요',
+              tip3: '토큰이 만료되지 않았는지 확인하세요 (카카오 API 도구에서 새로 발급)',
+            },
+          });
+        }
+      } catch (error) {
+        showResult('error', '네트워크 오류', {
+          message: error.message,
+          tip: '백엔드 서버가 실행 중인지 확인하세요',
+        });
+      } finally {
+        setLoading(testKakaoBtn, false);
+      }
+    });
+
+    // 애플 로그인 테스트
+    testAppleBtn.addEventListener('click', async () => {
+      const apiUrl = appleApiUrlInput.value.trim();
+      const identityToken = appleTokenInput.value.trim();
+      const name = appleNameInput.value.trim();
+
+      if (!apiUrl) {
+        alert('API URL을 입력하세요');
+        return;
+      }
+
+      if (!identityToken) {
+        alert('애플 Identity Token을 입력하세요');
+        return;
+      }
+
+      setLoading(testAppleBtn, true);
+
+      try {
+        const body = {
+          identityToken: identityToken,
+        };
+
+        if (name) {
+          body.name = name;
+        }
+
+        const response = await fetch(`${apiUrl}/api/auth/oauth/apple`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showResult('success', '애플 로그인 성공! 🎉', data);
+        } else {
+          showResult('error', '백엔드 로그인 실패', {
+            status: response.status,
+            ...data,
+          });
+        }
+      } catch (error) {
+        showResult('error', '네트워크 오류', {
+          message: error.message,
+          tip: '백엔드 서버가 실행 중인지 확인하세요',
+        });
+      } finally {
+        setLoading(testAppleBtn, false);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -163,26 +163,32 @@ export class OAuthLoginService {
         },
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new UnauthorizedException(
-          '카카오 사용자 정보를 가져올 수 없습니다.',
-        );
+        
+        const errorMessage = data?.msg || data?.error_description || '카카오 사용자 정보를 가져올 수 없습니다.';
+        throw new UnauthorizedException(errorMessage);
       }
 
-      const data = await response.json();
 
       const email = data.kakao_account?.email;
       const name = data.kakao_account?.profile?.nickname || '카카오 사용자';
 
       if (!email) {
         throw new BadRequestException(
-          '카카오 계정에서 이메일 정보를 찾을 수 없습니다.',
+          '카카오 계정에서 이메일 정보를 찾을 수 없습니다. 카카오 개발자 콘솔에서 이메일 동의항목을 필수로 설정하세요.',
         );
       }
 
       return { email, name };
     } catch (error) {
       this.logger.error('Failed to get Kakao user info:', error);
+      
+      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        throw error;
+      }
+      
       throw new UnauthorizedException('카카오 사용자 정보 조회에 실패했습니다.');
     }
   }
