@@ -7,6 +7,7 @@ import { appConfig } from './config/app.config';
 import { databaseConfig } from './config/database.config';
 import { throttlerConfig } from './config/throttler.config';
 
+import { AppController, ApiHealthController } from './app.controller';
 import { IamModule } from './domain/iam/iam.module';
 import { UsersModule } from './domain/users/users.module';
 import { SmsModule } from './domain/sms/sms.module';
@@ -14,7 +15,6 @@ import { YoutubeModule } from './domain/youtube/youtube.module';
 import { RecipeGeneratorModule } from './domain/recipe-generator/recipe-generator.module';
 import { RecipeSearchModule } from './domain/recipe-search/recipe-search.module';
 import { RecipeExplorerModule } from './domain/recipe-explorer/recipe-explorer.module';
-import { HealthModule } from './domain/health/health.module';
 
 /**
  * App Module
@@ -31,7 +31,6 @@ import { HealthModule } from './domain/health/health.module';
     ThrottlerModule.forRootAsync(throttlerConfig),
 
     // Domain Modules
-    HealthModule,
     IamModule,
     UsersModule,
     SmsModule,
@@ -40,5 +39,6 @@ import { HealthModule } from './domain/health/health.module';
     RecipeSearchModule,
     RecipeExplorerModule,
   ],
+  controllers: [AppController, ApiHealthController],
 })
 export class AppModule {}
