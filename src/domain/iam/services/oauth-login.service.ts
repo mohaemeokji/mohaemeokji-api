@@ -61,7 +61,7 @@ export class OAuthLoginService {
         );
       }
 
-      this.logger.log(`Kakao user info retrieved: ${kakaoUserInfo.email}`);
+      this.logger.log('Kakao user info retrieved successfully');
 
       // 2. 이메일로 기존 사용자 검색 및 로그인 처리
       const user = await this.findOrCreateUser(
@@ -102,7 +102,7 @@ export class OAuthLoginService {
         );
       }
 
-      this.logger.log(`Apple user info retrieved: ${appleUserInfo.email}`);
+      this.logger.log('Apple user info retrieved successfully');
 
       // 2. 이메일로 기존 사용자 검색 및 로그인 처리
       const userName = name || '애플 사용자';
@@ -135,14 +135,14 @@ export class OAuthLoginService {
       const existingUser = await this.usersService.findByEmail(email);
       
       this.logger.log(
-        `Existing user found with email ${email}. Provider: ${existingUser.register_path}`,
+        `Existing user found. Provider: ${existingUser.register_path}`,
       );
       
       return existingUser;
     } catch (error) {
       // 사용자가 없는 경우 - 새로 생성
       this.logger.log(
-        `No existing user found with email ${email}. Creating new user with provider: ${provider}`,
+        `No existing user found. Creating new user with provider: ${provider}`,
       );
       return await this.createOAuthUser(email, name, provider);
     }
@@ -232,7 +232,7 @@ export class OAuthLoginService {
         // audience: 'YOUR_BUNDLE_ID', // 필요시 앱 Bundle ID로 검증
       });
 
-      this.logger.log(`Apple token verified successfully for email: ${verified.email}`);
+      this.logger.log('Apple token verified successfully');
 
       // 4. 이메일 정보 확인
       if (!verified.email) {

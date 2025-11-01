@@ -16,6 +16,7 @@ export function configureSwaggerDocs(
       .setDescription('The API description')
       .setVersion('1.0')
       .addServer('http://localhost:3000', 'Local server')
+      .addServer('https://innocent-bevvy-team-mohaemeokji-aa5511e5.koyeb.app', 'Dev server')
       .addBearerAuth({
         description: 'Please enter token:',
         name: 'Authorization',
