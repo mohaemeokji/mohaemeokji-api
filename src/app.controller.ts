@@ -51,7 +51,7 @@ export class AppController {
  */
 @ApiTags('Health')
 @AuthGuard(AuthType.None)
-@Controller('api')
+@Controller()
 export class ApiHealthController {
   private getHealthResponse() {
     return {
@@ -61,15 +61,15 @@ export class ApiHealthController {
     };
   }
 
-  @Get('health')
+  @Get('api/health')
   @ApiOperation({ summary: '헬스 체크 (/api/health)' })
-  checkHealth() {
+  checkApiHealth() {
     return this.getHealthResponse();
   }
 
-  @Get('_health')
+  @Get('api/_health')
   @ApiOperation({ summary: '헬스 체크 (/api/_health)' })
-  checkUnderscoreHealth() {
+  checkApiUnderscoreHealth() {
     return this.getHealthResponse();
   }
 }
