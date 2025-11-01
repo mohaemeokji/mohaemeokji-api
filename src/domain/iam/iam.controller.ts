@@ -6,9 +6,6 @@ import {
   BadRequestException,
   HttpCode,
   ValidationPipe,
-  Get,
-  Res,
-  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,9 +16,7 @@ import {
   ApiBearerAuth,
   ApiResponse,
   ApiExcludeEndpoint,
-  ApiQuery,
 } from '@nestjs/swagger';
-import { FastifyReply } from 'fastify';
 import { AuthGuard } from './decorators/auth-guard.decorator';
 import { AuthType } from './enums/auth-type.enum';
 
@@ -41,6 +36,8 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { SendVerificationCodeRequestDto } from './dto/send-verification-code.request.dto';
 import { SendVerificationCodeResponseDto } from './dto/send-verification-code.response.dto';
+import { KakaoLoginDto } from './dto/kakao-login.dto';
+import { AppleLoginDto } from './dto/apple-login.dto';
 
 /**
  * IAM Controller (Identity and Access Management)
@@ -51,7 +48,7 @@ import { SendVerificationCodeResponseDto } from './dto/send-verification-code.re
  * - 비밀번호 변경 / 비밀번호 찾기
  * - OAuth (카카오, 애플) 소셜 로그인
  */
-@ApiTags('Auth [자체 로그인은 구현된 상태, 카카오 애플은 구현되지 않은 상태]')
+@ApiTags('Auth')
 @AuthGuard(AuthType.None)
 @Controller('auth')
 export class IamController {
@@ -184,93 +181,74 @@ export class IamController {
     }
   }
 
-  // ===== 카카오 OAuth =====
+  // ===== OAuth - Client-Side Flow (네이티브 앱용) =====
 
-  @Get('oauth/kakao/login')
-  @ApiOperation({
-    summary: '카카오 로그인 시작',
-    description: '카카오 OAuth 로그인 페이지로 리다이렉션합니다.',
-  })
-  @ApiQuery({
-    name: 'state',
-    required: false,
-    description: 'CSRF 방지를 위한 상태 값',
-  })
-  kakaoLoginRedirect(@Query('state') state?: string, @Res() res?: FastifyReply) {
-    const authUrl = this.oauthLoginService.getKakaoAuthorizationUrl(state);
-    return res.redirect(authUrl);
-  }
-
-  @Get('oauth/kakao/callback')
-  @ApiOperation({
-    summary: '카카오 로그인 콜백',
-    description: '카카오 OAuth 콜백을 처리합니다.',
-  })
-  @ApiQuery({ name: 'code', description: '카카오 인증 코드' })
-  @ApiQuery({ name: 'state', required: false, description: 'CSRF 상태 값' })
-  async kakaoCallback(
-    @Query('code') code: string,
-    @Query('state') state: string,
-    @Res() res: FastifyReply,
-  ) {
-    try {
-      const result = await this.oauthLoginService.kakaoCallback(code);
-      
-      const frontendUrl = process.env.FRONTEND_OAUTH_SUCCESS_URL || 'http://localhost:3001/oauth/callback';
-      const redirectUrl = `${frontendUrl}?accessToken=${result.accessToken}&refreshToken=${result.refreshToken}`;
-      
-      return res.redirect(redirectUrl);
-    } catch (error) {
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
-      const errorMessage = error instanceof Error ? error.message : '카카오 로그인에 실패했습니다.';
-      const errorUrl = `${frontendUrl}/oauth/error?message=${encodeURIComponent(errorMessage)}`;
-      return res.redirect(errorUrl);
-    }
-  }
-
-  // ===== 애플 OAuth =====
-
-  @Get('oauth/apple/login')
-  @ApiOperation({
-    summary: '애플 로그인 시작',
-    description: '애플 OAuth 로그인 페이지로 리다이렉션합니다.',
-  })
-  @ApiQuery({
-    name: 'state',
-    required: false,
-    description: 'CSRF 방지를 위한 상태 값',
-  })
-  appleLoginRedirect(@Query('state') state?: string, @Res() res?: FastifyReply) {
-    const authUrl = this.oauthLoginService.getAppleAuthorizationUrl(state);
-    return res.redirect(authUrl);
-  }
-
-  @Post('oauth/apple/callback')
+  @Post('oauth/kakao')
   @HttpCode(200)
   @ApiOperation({
-    summary: '애플 로그인 콜백',
-    description: '애플 OAuth 콜백을 처리합니다. (애플은 POST로 받습니다)',
+    summary: '카카오 로그인 (네이티브 앱용)',
+    description: `
+      카카오 SDK에서 받은 액세스 토큰으로 로그인합니다.
+      
+      **사용 방법:**
+      1. 네이티브 앱에서 카카오 SDK로 로그인합니다.
+      2. 카카오 SDK에서 받은 액세스 토큰을 이 엔드포인트로 전송합니다.
+      3. 백엔드가 토큰을 검증하고 JWT 토큰을 반환합니다.
+      
+      **권장:** 네이티브 앱(iOS, Android)에서는 이 방식을 사용하세요.
+    `,
   })
-  async appleCallback(
-    @Body('code') code: string,
-    @Body('state') state: string,
-    @Body('user') user: string,
-    @Res() res: FastifyReply,
-  ) {
-    try {
-      const userData = user ? JSON.parse(user) : undefined;
-      const result = await this.oauthLoginService.appleCallback(code, userData);
-      
-      const frontendUrl = process.env.FRONTEND_OAUTH_SUCCESS_URL || 'http://localhost:3001/oauth/callback';
-      const redirectUrl = `${frontendUrl}?accessToken=${result.accessToken}&refreshToken=${result.refreshToken}`;
-      
-      return res.redirect(redirectUrl);
-    } catch (error) {
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
-      const errorMessage = error instanceof Error ? error.message : '애플 로그인에 실패했습니다.';
-      const errorUrl = `${frontendUrl}/oauth/error?message=${encodeURIComponent(errorMessage)}`;
-      return res.redirect(errorUrl);
-    }
+  @ApiOkResponse({
+    status: 200,
+    description: 'JWT 토큰 반환',
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+        refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ status: 400, description: '잘못된 요청입니다' })
+  async kakaoLogin(@Body() kakaoLoginDto: KakaoLoginDto): Promise<any> {
+    return await this.oauthLoginService.kakaoLoginWithToken(kakaoLoginDto.accessToken);
   }
+
+  @Post('oauth/apple')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: '애플 로그인 (네이티브 앱용)',
+    description: `
+      애플 SDK에서 받은 Identity Token으로 로그인합니다.
+      
+      **사용 방법:**
+      1. 네이티브 앱에서 애플 SDK로 로그인합니다.
+      2. 애플 SDK에서 받은 Identity Token을 이 엔드포인트로 전송합니다.
+      3. 백엔드가 토큰을 검증하고 JWT 토큰을 반환합니다.
+      
+      **참고:** name은 최초 로그인 시에만 애플에서 제공됩니다.
+      
+      **권장:** 네이티브 앱(iOS, Android)에서는 이 방식을 사용하세요.
+    `,
+  })
+  @ApiOkResponse({
+    status: 200,
+    description: 'JWT 토큰 반환',
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+        refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ status: 400, description: '잘못된 요청입니다' })
+  async appleLogin(@Body() appleLoginDto: AppleLoginDto): Promise<any> {
+    return await this.oauthLoginService.appleLoginWithToken(
+      appleLoginDto.identityToken,
+      appleLoginDto.name,
+    );
+  }
+
 }
 

@@ -17,10 +17,12 @@ import jwtConfig from '../config/jwt.config';
 import oauthConfig from '../../../config/oauth.config';
 
 /**
- * OAuth Login Service (Server-Side Flow)
+ * OAuth Login Service
  * 
- * 카카오, 애플 등 소셜 로그인을 Server-Side Flow 방식으로 처리합니다.
- * 백엔드에서 OAuth 인증 흐름을 관리하고, 이메일을 기준으로 계정을 통합 관리합니다.
+ * 카카오, 애플 등 소셜 로그인을 Client-Side Flow로 처리합니다.
+ * 네이티브 앱에서 받은 토큰을 검증하여 로그인합니다.
+ * 
+ * 이메일을 기준으로 계정을 통합 관리합니다.
  */
 @Injectable()
 export class OAuthLoginService {
@@ -37,51 +39,18 @@ export class OAuthLoginService {
   ) {}
 
   /**
-   * 카카오 OAuth 인증 URL 생성
-   * Server-Side Flow의 첫 단계
-   */
-  getKakaoAuthorizationUrl(state?: string): string {
-    const params = new URLSearchParams({
-      client_id: this.oauthConfiguration.kakao.clientId,
-      redirect_uri: this.oauthConfiguration.kakao.redirectUri,
-      response_type: 'code',
-      ...(state && { state }),
-    });
-
-    return `${this.oauthConfiguration.kakao.authorizationUrl}?${params.toString()}`;
-  }
-
-  /**
-   * 애플 OAuth 인증 URL 생성
-   * Server-Side Flow의 첫 단계
-   */
-  getAppleAuthorizationUrl(state?: string): string {
-    const params = new URLSearchParams({
-      client_id: this.oauthConfiguration.apple.clientId,
-      redirect_uri: this.oauthConfiguration.apple.redirectUri,
-      response_type: 'code',
-      response_mode: 'form_post',
-      scope: 'name email',
-      ...(state && { state }),
-    });
-
-    return `${this.oauthConfiguration.apple.authorizationUrl}?${params.toString()}`;
-  }
-
-  /**
-   * 카카오 콜백 처리 (Server-Side Flow)
+   * 카카오 토큰으로 로그인
    * 
-   * 1. 인증 코드를 액세스 토큰으로 교환
-   * 2. 액세스 토큰으로 사용자 정보 조회
-   * 3. 이메일로 기존 사용자 검색
-   * 4. 기존 사용자가 있으면 로그인, 없으면 회원가입 후 로그인
+   * 네이티브 앱에서 카카오 SDK로 받은 액세스 토큰을 사용하여 로그인합니다.
+   * 
+   * @param accessToken 카카오 SDK에서 받은 액세스 토큰
+   * @returns JWT 토큰 (accessToken, refreshToken)
    */
-  async kakaoCallback(code: string): Promise<any> {
+  async kakaoLoginWithToken(accessToken: string): Promise<any> {
     try {
-      // 1. 인증 코드를 액세스 토큰으로 교환
-      const accessToken = await this.getKakaoAccessToken(code);
+      this.logger.log('Kakao Client-Side Flow: Starting login with access token');
 
-      // 2. 액세스 토큰으로 사용자 정보 조회
+      // 1. 액세스 토큰으로 사용자 정보 조회
       const kakaoUserInfo = await this.getKakaoUserInfo(accessToken);
 
       if (!kakaoUserInfo || !kakaoUserInfo.email) {
@@ -90,17 +59,19 @@ export class OAuthLoginService {
         );
       }
 
-      // 3. 이메일로 기존 사용자 검색 및 로그인 처리
+      this.logger.log(`Kakao user info retrieved: ${kakaoUserInfo.email}`);
+
+      // 2. 이메일로 기존 사용자 검색 및 로그인 처리
       const user = await this.findOrCreateUser(
         kakaoUserInfo.email,
         kakaoUserInfo.name,
         OAuthProvider.KAKAO,
       );
 
-      // 4. JWT 토큰 생성 및 반환
+      // 3. JWT 토큰 생성 및 반환
       return await this.loginService.generateTokens(user);
     } catch (error) {
-      this.logger.error('Kakao callback failed:', error);
+      this.logger.error('Kakao Client-Side login failed:', error);
       const errorMessage =
         error instanceof Error ? error.message : '카카오 로그인에 실패했습니다.';
       throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
@@ -108,20 +79,20 @@ export class OAuthLoginService {
   }
 
   /**
-   * 애플 콜백 처리 (Server-Side Flow)
+   * 애플 토큰으로 로그인
    * 
-   * 1. 인증 코드를 ID 토큰으로 교환
-   * 2. ID 토큰을 검증하고 사용자 정보 추출
-   * 3. 이메일로 기존 사용자 검색
-   * 4. 기존 사용자가 있으면 로그인, 없으면 회원가입 후 로그인
+   * 네이티브 앱에서 애플 SDK로 받은 Identity Token을 사용하여 로그인합니다.
+   * 
+   * @param identityToken 애플 SDK에서 받은 Identity Token (JWT)
+   * @param name 사용자 이름 (최초 로그인 시에만 제공됨)
+   * @returns JWT 토큰 (accessToken, refreshToken)
    */
-  async appleCallback(code: string, user?: any): Promise<any> {
+  async appleLoginWithToken(identityToken: string, name?: string): Promise<any> {
     try {
-      // 1. 인증 코드를 ID 토큰으로 교환
-      const idToken = await this.getAppleIdToken(code);
+      this.logger.log('Apple Client-Side Flow: Starting login with identity token');
 
-      // 2. ID 토큰 검증 및 사용자 정보 추출
-      const appleUserInfo = await this.verifyAppleToken(idToken);
+      // 1. Identity Token 검증 및 사용자 정보 추출
+      const appleUserInfo = await this.verifyAppleToken(identityToken);
 
       if (!appleUserInfo || !appleUserInfo.email) {
         throw new BadRequestException(
@@ -129,82 +100,23 @@ export class OAuthLoginService {
         );
       }
 
-      // 3. 이메일로 기존 사용자 검색 및 로그인 처리
-      // user 객체는 최초 로그인 시에만 애플에서 제공됩니다.
-      const userName = user?.name?.firstName
-        ? `${user.name.firstName}${user.name.lastName || ''}`
-        : '사용자';
+      this.logger.log(`Apple user info retrieved: ${appleUserInfo.email}`);
 
-      const userEntity = await this.findOrCreateUser(
+      // 2. 이메일로 기존 사용자 검색 및 로그인 처리
+      const userName = name || '애플 사용자';
+      const user = await this.findOrCreateUser(
         appleUserInfo.email,
         userName,
         OAuthProvider.APPLE,
       );
 
-      // 4. JWT 토큰 생성 및 반환
-      return await this.loginService.generateTokens(userEntity);
+      // 3. JWT 토큰 생성 및 반환
+      return await this.loginService.generateTokens(user);
     } catch (error) {
-      this.logger.error('Apple callback failed:', error);
+      this.logger.error('Apple Client-Side login failed:', error);
       const errorMessage =
         error instanceof Error ? error.message : '애플 로그인에 실패했습니다.';
       throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  /**
-   * 카카오 인증 코드를 액세스 토큰으로 교환
-   */
-  private async getKakaoAccessToken(code: string): Promise<string> {
-    try {
-      const params = new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: this.oauthConfiguration.kakao.clientId,
-        client_secret: this.oauthConfiguration.kakao.clientSecret,
-        redirect_uri: this.oauthConfiguration.kakao.redirectUri,
-        code,
-      });
-
-      const response = await fetch(this.oauthConfiguration.kakao.tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params.toString(),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        this.logger.error('Failed to get Kakao access token:', errorData);
-        throw new UnauthorizedException('카카오 액세스 토큰 획득에 실패했습니다.');
-      }
-
-      const data = await response.json();
-      return data.access_token;
-    } catch (error) {
-      this.logger.error('Failed to exchange Kakao code for token:', error);
-      throw new UnauthorizedException('카카오 인증 코드 교환에 실패했습니다.');
-    }
-  }
-
-  /**
-   * 애플 인증 코드를 ID 토큰으로 교환
-   */
-  private async getAppleIdToken(code: string): Promise<string> {
-    try {
-      // TODO: 애플 토큰 교환은 client_secret 생성이 복잡합니다.
-      // 프로덕션에서는 Apple Private Key로 서명된 JWT를 생성해야 합니다.
-      // 지금은 간단히 코드를 ID 토큰으로 간주합니다.
-      
-      // 실제 구현 시:
-      // 1. Apple Private Key로 client_secret JWT 생성
-      // 2. 토큰 엔드포인트로 POST 요청
-      // 3. id_token 추출 및 반환
-      
-      this.logger.warn('Apple token exchange is not fully implemented. Using code as ID token for development.');
-      return code; // 개발 모드: 코드를 그대로 사용
-    } catch (error) {
-      this.logger.error('Failed to exchange Apple code for token:', error);
-      throw new UnauthorizedException('애플 인증 코드 교환에 실패했습니다.');
     }
   }
 
