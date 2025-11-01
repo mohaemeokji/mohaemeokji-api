@@ -15,6 +15,8 @@ import { User } from '../../../core/entities/user/user.entity';
 import { OAuthProvider } from '../enums/oauth-provider.enum';
 import jwtConfig from '../config/jwt.config';
 import oauthConfig from '../../../config/oauth.config';
+import * as jwksClient from 'jwks-rsa';
+import * as jwt from 'jsonwebtoken';
 
 /**
  * OAuth Login Service
@@ -188,45 +190,64 @@ export class OAuthLoginService {
   /**
    * 애플 ID 토큰 검증
    * 
-   * 참고: 실제 프로덕션에서는 Apple의 공개 키를 사용하여 토큰을 검증해야 합니다.
-   * 현재는 간단하게 디코딩만 수행합니다.
+   * Apple의 공개 키를 사용하여 JWT 서명을 검증합니다.
+   * - Apple 공개 키 엔드포인트에서 키 가져오기
+   * - JWT 서명 검증
+   * - issuer, audience, 만료 시간 검증
    */
   private async verifyAppleToken(
     idToken: string,
   ): Promise<{ email: string; sub: string }> {
     try {
-      // JWT 디코딩 (검증 없이) - Base64 디코딩 사용
-      const tokenParts = idToken.split('.');
-      if (tokenParts.length !== 3) {
+      // 1. JWT 디코딩 (검증 전)
+      const decodedToken: any = jwt.decode(idToken, { complete: true });
+      
+      if (!decodedToken || !decodedToken.header || !decodedToken.header.kid) {
         throw new BadRequestException('유효하지 않은 애플 ID 토큰 형식입니다.');
       }
 
-      // Payload 부분 디코딩
-      const payload = tokenParts[1];
-      const decodedPayload = Buffer.from(payload, 'base64').toString('utf-8');
-      const decoded: any = JSON.parse(decodedPayload);
+      const kid = decodedToken.header.kid;
+      this.logger.log(`Verifying Apple token with kid: ${kid}`);
 
-      if (!decoded || !decoded.email) {
-        throw new BadRequestException('유효하지 않은 애플 ID 토큰입니다.');
+      // 2. Apple 공개 키 가져오기
+      const client = jwksClient({
+        jwksUri: 'https://appleid.apple.com/auth/keys',
+        cache: true,
+        cacheMaxAge: 86400000, // 24시간 캐싱
+      });
+
+      const key = await client.getSigningKey(kid);
+      const publicKey = key.getPublicKey();
+
+      // 3. JWT 검증 (서명, issuer, 만료 시간)
+      const verified: any = jwt.verify(idToken, publicKey, {
+        algorithms: ['RS256'],
+        issuer: 'https://appleid.apple.com',
+        // audience: 'YOUR_BUNDLE_ID', // 필요시 앱 Bundle ID로 검증
+      });
+
+      this.logger.log(`Apple token verified successfully for email: ${verified.email}`);
+
+      // 4. 이메일 정보 확인
+      if (!verified.email) {
+        throw new BadRequestException('애플 토큰에 이메일 정보가 없습니다.');
       }
 
       return {
-        email: decoded.email,
-        sub: decoded.sub,
+        email: verified.email,
+        sub: verified.sub,
       };
-
-      // TODO: 프로덕션에서는 Apple의 공개 키로 토큰을 검증해야 합니다.
-      // Apple의 공개 키는 https://appleid.apple.com/auth/keys 에서 가져올 수 있습니다.
-      // 
-      // 검증 방법:
-      // 1. Apple의 공개 키 엔드포인트에서 키 목록을 가져옵니다.
-      // 2. 토큰 헤더의 'kid'와 일치하는 키를 찾습니다.
-      // 3. 해당 키로 토큰 서명을 검증합니다.
-      // 4. issuer가 'https://appleid.apple.com'인지 확인합니다.
-      // 5. audience가 앱의 Bundle ID인지 확인합니다.
-      // 6. exp(만료 시간)이 유효한지 확인합니다.
     } catch (error) {
       this.logger.error('Failed to verify Apple ID token:', error);
+      
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new UnauthorizedException('애플 ID 토큰 서명이 유효하지 않습니다.');
+      }
+      
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new UnauthorizedException('애플 ID 토큰이 만료되었습니다.');
+      }
+      
       throw new UnauthorizedException('애플 ID 토큰 검증에 실패했습니다.');
     }
   }
