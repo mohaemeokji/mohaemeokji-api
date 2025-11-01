@@ -8,7 +8,7 @@ import { RecipeListItemDto } from './dto/recipe-list-item.dto';
 import { AuthGuard } from '../iam/decorators/auth-guard.decorator';
 import { AuthType } from '../iam/enums/auth-type.enum';
 
-@ApiTags('Recipe Search')
+@ApiTags('Recipe Search [임시 구축된 버전 데이터는 DB와는 연동 된 상태]')
 @Controller('recipe-search')
 @ApiBearerAuth()
 @AuthGuard(AuthType.Bearer)

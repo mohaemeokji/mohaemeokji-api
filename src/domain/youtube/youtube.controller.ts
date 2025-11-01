@@ -23,7 +23,7 @@ import { YoutubeFullDataResponseDto } from './dto/youtube-full-data-response.dto
 import { AuthGuard } from '../iam/decorators/auth-guard.decorator';
 import { AuthType } from '../iam/enums/auth-type.enum';
 
-@ApiTags('youtube')
+@ApiTags('Youtube [Production에서는 아마 미사용 | 실제 유튜브 데이터 및 DB 연동된 상태]')
 @Controller('youtube')
 @ApiBearerAuth()
 @AuthGuard(AuthType.Bearer)

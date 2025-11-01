@@ -15,11 +15,7 @@ import { ForgotPasswordService } from './services/forgot-password.service';
 import { OAuthLoginService } from './services/oauth-login.service';
 
 // Controllers
-import { LoginController } from './controllers/login.controller';
-import { RegisterController } from './controllers/register.controller';
-import { ChangePasswordController } from './controllers/change-password.controller';
-import { ForgotPasswordController } from './controllers/forgot-password.controller';
-import { OAuthLoginController } from './controllers/oauth-login.controller';
+import { IamController } from './iam.controller';
 
 // Guards
 import { AccessTokenGuard } from './guards/access-token.guard';
@@ -49,13 +45,7 @@ import { SmsModule } from '../../core/components/sms/sms.module';
     MailerModule,
     SmsModule,
   ],
-  controllers: [
-    LoginController,
-    RegisterController,
-    ChangePasswordController,
-    ForgotPasswordController,
-    OAuthLoginController,
-  ],
+  controllers: [IamController],
   providers: [
     {
       provide: APP_GUARD,

@@ -39,7 +39,7 @@ import { UserAllResponseDto } from '@/domain/users/dto/response/user-all-respons
 import { UserDeleteRequestDto } from '@/domain/users/dto/request/user-delete-request.dto';
 import { SmsService } from '../../core/components/sms/sms.service';
 
-@ApiTags('users')
+@ApiTags('Users [임시 구축된 버전 실제 DB와는 연동 된 상태]')
 @ApiBearerAuth()
 @AuthGuard(AuthType.Bearer)
 @Controller('users')

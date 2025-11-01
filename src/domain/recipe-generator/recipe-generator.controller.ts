@@ -8,7 +8,7 @@ import { AuthType } from '../iam/enums/auth-type.enum';
 import { GetUser } from '../users/decorators/get-user.decorator';
 import { JwtUser } from '../iam/interfaces/jwt-user.interface';
 
-@ApiTags('Recipe Generator')
+@ApiTags('Recipe Generator [레시피 만드는 API DB 연동된 상태]')
 @Controller('recipe-generator')
 @ApiBearerAuth()
 @AuthGuard(AuthType.Bearer)
