@@ -14,6 +14,7 @@ import { YoutubeModule } from './domain/youtube/youtube.module';
 import { RecipeGeneratorModule } from './domain/recipe-generator/recipe-generator.module';
 import { RecipeSearchModule } from './domain/recipe-search/recipe-search.module';
 import { RecipeExplorerModule } from './domain/recipe-explorer/recipe-explorer.module';
+import { HealthModule } from './domain/health/health.module';
 
 /**
  * App Module
@@ -30,6 +31,7 @@ import { RecipeExplorerModule } from './domain/recipe-explorer/recipe-explorer.m
     ThrottlerModule.forRootAsync(throttlerConfig),
 
     // Domain Modules
+    HealthModule,
     IamModule,
     UsersModule,
     SmsModule,
